@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Half Marathon Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Serene Fitness -->
+    <!-- Application Structure Plan: The application is designed as an interactive weekly dashboard. The core structure uses top-level buttons to navigate between the four weeks of the plan. This is more user-friendly than a long, scrolling table, especially on mobile devices. When a week is selected, a summary section updates with key metrics (weekly goal, total distance), and a grid of daily cards displays the detailed training and diet information for that specific week. This task-oriented design allows the user to focus on the current week's plan without distraction. A persistent bar chart at the bottom provides a constant visual reference of the overall training progression, with the currently selected week highlighted for context. This structure was chosen to make the plan digestible, facilitate easy navigation, and visually motivate the user by showing progress over time. -->
+    <!-- Visualization & Content Choices: Report Info: Weekly training schedule -> Goal: Organize/Navigate -> Viz/Presentation: Navigation Buttons -> Interaction: Click to update the displayed week's content -> Justification: Provides a clear, simple, and intuitive way to switch between different sections of the plan. Library/Method: HTML/JS. | Report Info: Daily running distances -> Goal: Show Change/Compare -> Viz/Presentation: Bar Chart -> Interaction: Bars for the selected week are highlighted -> Justification: Visually represents the progressive increase in training load, which is more motivating and easier to understand than raw numbers. Library/Method: Chart.js/Canvas. | Report Info: Daily training/diet details -> Goal: Inform -> Viz/Presentation: Themed Cards -> Interaction: None -> Justification: Cards visually separate daily tasks, making the plan less overwhelming and easier to read than a dense table. Library/Method: HTML/Tailwind CSS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-btn {
+            transition: all 0.3s ease;
+        }
+        .nav-btn.active {
+            background-color: #0ea5e9; /* sky-500 */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        .checklist-item::before {
+            content: '✓';
+            color: #10b981; /* emerald-500 */
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        .task-checkbox:checked + span {
+            text-decoration: line-through;
+            color: #64748b; /* slate-500 */
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900">Your Interactive Half Marathon Plan</h1>
+            <p class="mt-2 text-lg text-slate-600">Your 4-week journey to the finish line starts now. Select a week to begin.</p>
+        </header>
+
+        <section class="grid md:grid-cols-2 gap-8 mb-10">
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">Key Training Principles</h2>
+                <ul class="space-y-3 text-slate-700">
+                    <li class="checklist-item"><span><strong>Consistency is Key:</strong> Stick to the schedule as much as possible, but don't be afraid to listen to your body and take an extra rest day if needed.</span></li>
+                    <li class="checklist-item"><span><strong>Warm-up & Cool-down:</strong> Never skip your warm-up before a run and your cool-down stretches after. This is critical for preventing injuries.</span></li>
+                    <li class="checklist-item"><span><strong>Pace Yourself:</strong> Most of your runs should be at an "easy" or conversational pace. Don't try to run too fast too soon.</span></li>
+                    <li class="checklist-item"><span><strong>Cross-Training:</strong> Activities like cycling or swimming build fitness without the high impact of running, aiding recovery and preventing burnout.</span></li>
+                </ul>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                 <h2 class="text-2xl font-bold text-slate-900 mb-4">Essential Diet Checklist</h2>
+                <ul class="space-y-3 text-slate-700">
+                    <li class="checklist-item"><span><strong>Hydration is Non-Negotiable:</strong> Drink water consistently throughout the day, not just around your runs. Aim for 2-3 liters daily.</span></li>
+                    <li class="checklist-item"><span><strong>Fuel with Complex Carbs:</strong> Prioritize whole grains (oats, brown rice, quinoa), fruits, and vegetables for sustained energy.</span></li>
+                    <li class="checklist-item"><span><strong>Lean Protein for Recovery:</strong> Include chicken, fish, eggs, and lentils in your meals to help muscles repair and rebuild after training.</span></li>
+                    <li class="checklist-item"><span><strong>Post-Run Refuel:</strong> Consume a mix of carbs and protein (like chocolate milk or a banana with peanut butter) within 30-60 minutes after your run to maximize recovery.</span></li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4 text-center">Warm-up & Cool-down Routine</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="font-semibold text-lg text-sky-700 mb-2">Dynamic Warm-up (Before Run)</h3>
+                    <p class="text-slate-600 mb-3">Perform each for 30-60 seconds. These movements prepare your muscles for running.</p>
+                    <ul class="list-disc list-inside space-y-1 text-slate-700">
+                        <li>Leg Swings (forward and side-to-side)</li>
+                        <li>High Knees</li>
+                        <li>Butt Kicks</li>
+                        <li>Walking Lunges</li>
+                        <li>Torso Twists</li>
+                        <li>5 minutes of brisk walking or light jogging</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg text-emerald-700 mb-2">Static Cool-down (After Run)</h3>
+                    <p class="text-slate-600 mb-3">Hold each stretch for 20-30 seconds. Do not bounce. This helps with flexibility and recovery.</p>
+                     <ul class="list-disc list-inside space-y-1 text-slate-700">
+                        <li>Quadriceps Stretch</li>
+                        <li>Hamstring Stretch</li>
+                        <li>Calf Stretch</li>
+                        <li>Glute Stretch (Figure-four)</li>
+                        <li>Groin Stretch (Butterfly)</li>
+                        <li>Triceps Stretch</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <nav id="week-navigation" class="flex justify-center flex-wrap gap-2 md:gap-4 mb-8">
+        </nav>
+
+        <main id="plan-content" class="bg-white rounded-2xl shadow-lg p-6 md:p-8 min-h-[500px]">
+            <section id="week-summary" class="mb-6 pb-6 border-b border-slate-200">
+                <h2 id="week-title" class="text-3xl font-bold text-sky-600 mb-2"></h2>
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-slate-600">
+                    <p id="week-goal" class="text-lg"></p>
+                    <p id="week-distance" class="font-semibold text-sky-500 bg-sky-100 rounded-full px-4 py-1 text-sm"></p>
+                </div>
+            </section>
+            
+            <section id="daily-plan-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </section>
+        </main>
+
+        <section class="mt-12 bg-white rounded-2xl shadow-lg p-6 md:p-8">
+            <div class="text-center mb-6">
+                <h2 class="text-3xl font-bold text-slate-900">Training Progression</h2>
+                <p class="mt-1 text-slate-600">This chart visualizes your planned running distance each day. Watch your endurance build over the four weeks!</p>
+            </div>
+            <div class="chart-container">
+                <canvas id="progressChart"></canvas>
+            </div>
+        </section>
+
+        <footer class="text-center mt-12 py-6 text-slate-500">
+            <p>Stick to the plan, listen to your body, and you'll be ready for race day!</p>
+            <p class="text-sm mt-1">Created for you on July 25, 2025.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const planData = [
+            {
+                week: 1,
+                title: "Week 1: Building Your Base",
+                goal: "This week is about getting your body used to regular running.",
+                days: [
+                    { day: "Monday", training: "3 km run (Easy pace: ~8-9 km/hr)", diet: { breakfast: "2 scrambled eggs, 1 slice whole-wheat toast", lunch: "Grilled chicken salad", dinner: "Baked fish with quinoa and steamed vegetables" } },
+                    { day: "Tuesday", training: "Rest or Cross-Train (30 min cycling)", diet: { hydration: "Drink at least 2-3 liters of water" } },
+                    { day: "Wednesday", training: "3.5 km run (Easy pace: ~8-9 km/hr)", diet: { breakfast: "Oatmeal with berries and nuts", lunch: "Leftover baked fish", dinner: "Chicken stir-fry with brown rice" } },
+                    { day: "Thursday", training: "Rest", diet: { hydration: "Continue with high water intake" } },
+                    { day: "Friday", training: "4 km run (Slightly faster pace: ~9-10 km/hr)", diet: { breakfast: "Greek yogurt with honey", lunch: "Turkey and avocado wrap", dinner: "Lean beef steak with sweet potato and broccoli" } },
+                    { day: "Saturday", training: "Rest", diet: { carbs: "Ensure you're eating enough complex carbs for the long run tomorrow." } },
+                    { day: "Sunday", training: "Long Run: 5 km (Slow, steady pace: ~7-8 km/hr)", diet: { preRun: "Banana", postRun: "Chocolate milk or a protein shake", dinner: "Grilled salmon with roasted asparagus" } }
+                ]
+            },
+            {
+                week: 2,
+                title: "Week 2: Increasing Endurance",
+                goal: "We'll start to increase the distance of your long run.",
+                days: [
+                    { day: "Monday", training: "4 km run (Easy pace: ~8-9 km/hr)", diet: { breakfast: "2 boiled eggs, fruit", lunch: "Chicken and vegetable skewers", dinner: "Lentil soup with a side of grilled chicken" } },
+                    { day: "Tuesday", training: "Rest or Cross-Train (30 min swimming)", diet: { hydration: "Keep up the hydration." } },
+                    { day: "Wednesday", training: "4.5 km run (Easy pace: ~8-9 km/hr)", diet: { breakfast: "Smoothie with spinach, protein powder, and fruit", lunch: "Leftover lentil soup", dinner: "Tandoori chicken with a small naan" } },
+                    { day: "Thursday", training: "Rest", diet: { hydration: "Hydration is key." } },
+                    { day: "Friday", training: "5 km run (Intervals: 5 min run, 1 min walk)", diet: { breakfast: "Scrambled eggs with spinach", lunch: "Tuna salad sandwich on whole-wheat", dinner: "Mutton curry with brown rice" } },
+                    { day: "Saturday", training: "Rest", diet: { carbs: "Carb-load slightly for tomorrow's long run. Add an extra serving of rice or pasta to your dinner." } },
+                    { day: "Sunday", training: "Long Run: 7 km (Slow, steady pace: ~7-8 km/hr)", diet: { preRun: "A piece of toast with peanut butter", postRun: "A glass of milk and a banana", dinner: "Roasted chicken with vegetables" } }
+                ]
+            },
+            {
+                week: 3,
+                title: "Week 3: Peak Week",
+                goal: "This is your most challenging week before we start to taper.",
+                days: [
+                    { day: "Monday", training: "5 km run (Easy pace: ~8-9 km/hr)", diet: { breakfast: "Oatmeal with seeds", lunch: "Grilled fish tacos", dinner: "Chicken breast with roasted Brussels sprouts" } },
+                    { day: "Tuesday", training: "Rest or Cross-Train (40 min cycling)", diet: { hydration: "Focus on staying hydrated." } },
+                    { day: "Wednesday", training: "6 km run (Easy pace: ~8-9 km/hr)", diet: { breakfast: "Greek yogurt with granola", lunch: "Leftover chicken", dinner: "Shrimp and vegetable stir-fry" } },
+                    { day: "Thursday", training: "Rest", diet: { hydration: "Keep drinking plenty of water." } },
+                    { day: "Friday", training: "5 km run (Tempo run: ~10-11 km/hr)", diet: { breakfast: "2-egg omelet with vegetables", lunch: "Quinoa salad with chicken", dinner: "Lean lamb chops with couscous" } },
+                    { day: "Saturday", training: "Rest", diet: { carbs: "Start carb-loading for your longest run. Focus on complex carbs." } },
+                    { day: "Sunday", training: "Long Run: 10 km (Slow, steady pace: ~7-8 km/hr)", diet: { preRun: "Banana and a small coffee", postRun: "Protein smoothie", dinner: "A satisfying meal like chicken biryani (not too oily)" } }
+                ]
+            },
+            {
+                week: 4,
+                title: "Week 4: Taper and Race Week",
+                goal: "We'll reduce volume to let your body recover and be fresh for race day.",
+                days: [
+                    { day: "Monday", training: "3 km run (Very easy pace: ~8-9 km/hr)", diet: { general: "Maintain a balanced diet, but slightly reduce calorie intake as your training volume decreases." } },
+                    { day: "Tuesday", training: "Rest", diet: { hydration: "Hydrate, hydrate, hydrate!" } },
+                    { day: "Wednesday", training: "2 km run (Easy, with a few strides)", diet: { carbs: "Focus on carbohydrates. Pasta, rice, and potatoes are your friends." } },
+                    { day: "Thursday", training: "Rest", diet: { carbs: "Continue carb-loading and hydrating. Avoid heavy, greasy foods." } },
+                    { day: "Friday", training: "Rest", diet: { carbs: "This is your main carb-loading day. Have a good pasta or rice-based dinner. Don't eat too late." } },
+                    { day: "Saturday", training: "RACE DAY! (21.1 km)", diet: { preRace: "Breakfast (2-3 hours before): Oatmeal or a bagel with peanut butter.", duringRace: "Gels or chews if you've practiced with them.", postRace: "Chocolate milk, banana, and a meal with protein and carbs." } },
+                    { day: "Sunday", training: "Active Recovery (Light walk)", diet: { recovery: "Celebrate! Eat what you crave, but also focus on protein to help your muscles recover." } }
+                ]
+            }
+        ];
+
+        let currentWeek = 1;
+        let progressChart;
+        let taskStates = {};
+
+        const weekNavigation = document.getElementById('week-navigation');
+        const weekTitle = document.getElementById('week-title');
+        const weekGoal = document.getElementById('week-goal');
+        const weekDistance = document.getElementById('week-distance');
+        const dailyPlanGrid = document.getElementById('daily-plan-grid');
+        const chartCanvas = document.getElementById('progressChart').getContext('2d');
+        
+        function loadTaskStates() {
+            const savedStates = localStorage.getItem('marathonTaskStates');
+            if (savedStates) {
+                taskStates = JSON.parse(savedStates);
+            }
+        }
+
+        function saveTaskStates() {
+            localStorage.setItem('marathonTaskStates', JSON.stringify(taskStates));
+        }
+
+        function getKmFromString(str) {
+            const match = str.match(/(\d+(\.\d+)?)\s*km/);
+            return match ? parseFloat(match[1]) : 0;
+        }
+
+        function createTaskItem(id, label) {
+            const isChecked = taskStates[id] ? 'checked' : '';
+            return `
+                <label for="${id}" class="flex items-center gap-2 cursor-pointer text-slate-600">
+                    <input type="checkbox" id="${id}" class="task-checkbox h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500" ${isChecked}>
+                    <span>${label}</span>
+                </label>
+            `;
+        }
+        
+        function createDietChecklist(dayData, dayId) {
+            let dietHtml = '<div class="space-y-2">';
+            const diet = dayData.diet;
+            if (diet.hydration) dietHtml += createTaskItem(`${dayId}-hydration`, `Hydrate: ${diet.hydration}`);
+            if (diet.breakfast) dietHtml += createTaskItem(`${dayId}-breakfast`, `Breakfast: ${diet.breakfast}`);
+            if (diet.lunch) dietHtml += createTaskItem(`${dayId}-lunch`, `Lunch: ${diet.lunch}`);
+            if (diet.dinner) dietHtml += createTaskItem(`${dayId}-dinner`, `Dinner: ${diet.dinner}`);
+            if (diet.preRun) dietHtml += createTaskItem(`${dayId}-prerun`, `Pre-run: ${diet.preRun}`);
+            if (diet.postRun) dietHtml += createTaskItem(`${dayId}-postrun`, `Post-run: ${diet.postRun}`);
+            if (diet.carbs) dietHtml += createTaskItem(`${dayId}-carbs`, `Carbs: ${diet.carbs}`);
+            if (diet.general) dietHtml += createTaskItem(`${dayId}-general`, `Note: ${diet.general}`);
+            if (diet.preRace) dietHtml += createTaskItem(`${dayId}-prerace`, `Pre-race: ${diet.preRace}`);
+            if (diet.duringRace) dietHtml += createTaskItem(`${dayId}-duringrace`, `During-race: ${diet.duringRace}`);
+            if (diet.postRace) dietHtml += createTaskItem(`${dayId}-postrace`, `Post-race: ${diet.postRace}`);
+            if (diet.recovery) dietHtml += createTaskItem(`${dayId}-recovery`, `Recovery Fuel: ${diet.recovery}`);
+            dietHtml += '</div>';
+            return dietHtml;
+        }
+
+        function renderWeek(weekNumber) {
+            currentWeek = weekNumber;
+            const weekData = planData.find(w => w.week === weekNumber);
+            if (!weekData) return;
+
+            weekTitle.textContent = weekData.title;
+            weekGoal.textContent = weekData.goal;
+            
+            const totalKm = weekData.days.reduce((acc, day) => acc + getKmFromString(day.training), 0);
+            weekDistance.textContent = `Total Weekly Distance: ${totalKm.toFixed(1)} km`;
+
+            dailyPlanGrid.innerHTML = '';
+            weekData.days.forEach((day, index) => {
+                const dayId = `w${weekNumber}d${index}`;
+                const dayCard = document.createElement('div');
+                dayCard.className = 'bg-slate-50 rounded-xl p-5 flex flex-col gap-4 border border-slate-200';
+                
+                let trainingIcon = getKmFromString(day.training) > 0 ? '&#127939;' : '&#128738;';
+                if (day.training.toLowerCase().includes('race day')) trainingIcon = '&#127941;';
+                if (day.training.toLowerCase().includes('cross-train')) trainingIcon = '&#128692;';
+
+                let trainingChecklist = '<div class="space-y-2">';
+                if (getKmFromString(day.training) > 0) {
+                    trainingChecklist += createTaskItem(`${dayId}-warmup`, 'Dynamic Warm-up');
+                    trainingChecklist += createTaskItem(`${dayId}-training`, day.training);
+                    trainingChecklist += createTaskItem(`${dayId}-cooldown`, 'Static Cool-down');
+                } else {
+                    trainingChecklist += createTaskItem(`${dayId}-training`, day.training);
+                }
+                trainingChecklist += '</div>';
+
+                dayCard.innerHTML = `
+                    <h3 class="text-xl font-bold text-slate-800">${day.day}</h3>
+                    <div class="flex-grow space-y-4">
+                        <div>
+                            <p class="font-semibold text-sky-700 flex items-center gap-2 mb-2">${trainingIcon} Training</p>
+                            ${trainingChecklist}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-emerald-700 flex items-center gap-2 mb-2">&#127822; Diet & Fuel</p>
+                            ${createDietChecklist(day, dayId)}
+                        </div>
+                    </div>
+                `;
+                dailyPlanGrid.appendChild(dayCard);
+            });
+            
+            updateNavButtons();
+            updateChartHighlight();
+        }
+
+        dailyPlanGrid.addEventListener('change', (e) => {
+            if (e.target.classList.contains('task-checkbox')) {
+                taskStates[e.target.id] = e.target.checked;
+                saveTaskStates();
+            }
+        });
+
+        function updateNavButtons() {
+            const buttons = weekNavigation.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.week) === currentWeek);
+            });
+        }
+
+        function createNav() {
+            planData.forEach(week => {
+                const button = document.createElement('button');
+                button.textContent = `Week ${week.week}`;
+                button.dataset.week = week.week;
+                button.className = 'nav-btn font-semibold py-2 px-5 rounded-full bg-white text-slate-700 shadow-sm border border-slate-200 hover:bg-slate-100';
+                button.addEventListener('click', () => renderWeek(week.week));
+                weekNavigation.appendChild(button);
+            });
+        }
+        
+        function initChart() {
+            const labels = planData.flatMap(week => week.days.map(day => `W${week.week} ${day.day.substring(0,3)}`));
+            const data = planData.flatMap(week => week.days.map(day => getKmFromString(day.training)));
+
+            progressChart = new Chart(chartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Running Distance (km)',
+                        data: data,
+                        backgroundColor: [],
+                        borderColor: [],
+                        borderWidth: 2,
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${c.dataset.label || ''}: ${c.parsed.y} km` } } },
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Distance (km)' } }, x: { grid: { display: false } } }
+                }
+            });
+        }
+
+        function updateChartHighlight() {
+            if (!progressChart) return;
+            const colors = progressChart.data.datasets[0].data.map((_, index) => {
+                const weekIndex = Math.floor(index / 7) + 1;
+                return weekIndex === currentWeek;
+            });
+            progressChart.data.datasets[0].backgroundColor = colors.map(isActive => isActive ? 'rgba(14, 165, 233, 0.8)' : 'rgba(14, 165, 233, 0.3)');
+            progressChart.data.datasets[0].borderColor = colors.map(isActive => isActive ? 'rgba(14, 165, 233, 1)' : 'rgba(14, 165, 233, 0.5)');
+            progressChart.update();
+        }
+
+        window.onload = () => {
+            loadTaskStates();
+            createNav();
+            initChart();
+            renderWeek(1);
+        };
+    </script>
+</body>
+</html>
